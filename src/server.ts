@@ -165,48 +165,59 @@ app.post('/generation-callback', (req, res, next) => {
   }
 });
 
-function convertToHTML(results: any[]) {
-  let stack: string[] = [];
-  let html = '<div>';
-  stack.push('/<div>');
+const MOCK = {
+  batchId: '0c8c6a69-cd1e-4e5f-b103-3dca97df2f4c',
+  length: 5,
+  results: [
+    {
+      productId: 6646373154867,
+      productTitle: 'All Over Print Wide Waistband Leggings',
+      content:
+        'Layered patterns make for a multidimensional look when you slip these wide-waisted leggings on. It’s the perfect way to mix and match patterns in your wardrobe. Add a simple bodysuit and a pair of heeled booties for an effortless look.',
+    },
+    {
+      productId: 6646373220403,
+      productTitle: 'Button Front Ruffle Trim Skirt',
+      content:
+        'A ruffle skirt with a touch of playfulness. This skirt is made of denim, which makes it easy to dress up or dress down. Wear this skirt for a casual day or an evening out with some heels and a cute top.',
+    },
+    {
+      productId: 6646373122099,
+      productTitle: 'Allover Floral Print Split Hem Skirt',
+      content:
+        'A summer staple, this A-line skirt is crafted in soft chiffon and features a split hem in front. In a mid-weight fabric, this is the skirt to pack in your travel bag and take on holiday. Pair it with a crop top, bralette and sandals for scorching days in the sunshine.',
+    },
+    {
+      productId: 6646373187635,
+      productTitle: 'Buckle Belted Glen Plaid Pants',
+      content:
+        'These pants are straight out of the 80s. With their wide leg and buckle detailing, you’ll want to wear them everywhere. So, we made them in all sorts of colors so you can be colorful, too! From our Glen Plaid Collection, this item is designed for the retro-minded.',
+    },
+    {
+      productId: 6646373285939,
+      productTitle: 'Allover Print Layered Skort',
+      content:
+        'Twirl through the party in style! This skort is made with a fun allover print fabric and a flare silhouette to show off your own unique style. Pair this skort with heels or flats for a stylish look!',
+    },
+  ],
+};
 
-  // add shop title
-  html += '<h1></h1>';
-
-  html += '<ol>';
-  stack.push('</ol>');
-}
-
-const generateHTML = async () => {
+const generateHTML = async (storeName, data) => {
+  // 1. get the HTML template
   const template = await fs.readFile(
     path.join(__dirname, '/views/template.ejs'),
     'utf-8'
   );
 
-  let shopName = 'Fashion Store';
+  //2. grab the data
+  const { results } = data;
 
-  console.log(template);
-  const html = ejs.render(template, { shopName });
+  //3. dynamically render the html
+  const html = ejs.render(template, { storeName, results });
   console.log(html);
 };
 
-generateHTML();
-
-// console.log('creating html body...');
-// let html = '<div>';
-// html += '<h1>example store</h1>';
-// html += '<ol>';
-// const descriptions = req.body.descriptions;
-// html += '<li>';
-// html += `Product <br><br>`;
-// html += descriptions[0].content;
-// html += '</li><br>';
-
-// html += '</ol>';
-// html += '</div>';
-
-// console.log(html);
-
+generateHTML('Fashion Store', MOCK);
 /**
  * Listener
  */

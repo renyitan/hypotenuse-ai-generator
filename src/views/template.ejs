@@ -1,3 +1,13 @@
 <!DOCTYPE html>
-<h1><%= storeName %></h1>
-<html></html>
+<html>
+  <h1><%= storeName %></h1>
+
+  <ol>
+    <% results.forEach(result => { %>
+    <li>
+      <h4><%= result.productTitle %></h4>
+      <p><%= result.content %></p>
+    </li>
+    <% }); %>
+  </ol>
+</html>
