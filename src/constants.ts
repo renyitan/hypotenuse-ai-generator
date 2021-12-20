@@ -84,6 +84,18 @@ const products = [
   },
 ];
 
+const descriptions = [
+  {
+    description_id: 'c360a848-7b06-4ef1-afd2-6a3c24904e97',
+    content: 'Mock Description Content 1',
+  },
+  {
+    description_id: 'c29dbca3-0c2a-4ab2-af9b-3eaa65d677ab',
+    content: 'Mock Description Content 2',
+  },
+];
+
 export default {
   products,
+  descriptions,
 };

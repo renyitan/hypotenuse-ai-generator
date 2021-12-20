@@ -30,7 +30,7 @@ console.log(Constants.products);
  * Server Routes
  */
 app.get('/', (req, res, next) => {
-  res.json({ message: 'renyi\'s dev things' });
+  res.json({ message: "renyi's dev things" });
 });
 
 app.get('/products', (req, res, next) => {
@@ -42,9 +42,32 @@ app.get('/products', (req, res, next) => {
  * Call back end point
  */
 app.post('/generation-callback', (req, res, next) => {
-  console.log('call back received');
-  console.log(req.body);
+  console.log('callback received');
+  console.log('Callback', req.body);
+
+  console.log('creating html body...');
+  let html = '<html>\n';
+  const descriptions = req.body.descriptions;
 });
+
+// let html = '<div>';
+// html += '<h1>example store</h1>';
+// html += '<ol>';
+// descriptions.forEach((desc, index) => {
+//   html += '<li>';
+//   html += `Product ${index} <br>`;
+//   html += desc.content;
+//   html += '</li>';
+// });
+
+// html += '</ol>';
+// html += '</div>';
+
+// console.log(html);
+
+/**
+ * Listener
+ */
 
 app.listen(PORT, () => {
   console.log(`Running on port: ${PORT}`);
