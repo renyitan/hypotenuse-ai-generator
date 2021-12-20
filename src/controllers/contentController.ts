@@ -135,7 +135,7 @@ const generateContents = catchAsync(async (req, res) => {
   res.status(200).send({
     batchId: batchId,
     length: productIds.length,
-    results: processed,
+    processed,
     message: `Processed ${productIds.length} products successfully`,
   });
 });
@@ -144,6 +144,7 @@ const generateContents = catchAsync(async (req, res) => {
  * Process callback from Generator API
  */
 const processCallback = catchAsync(async (req, res) => {
+  console.log('call back response', req.body);
   // 1. get the metadata
   const { metadata } = req.body;
   const { batchId, productTitle, productId } = JSON.parse(metadata);
@@ -164,6 +165,14 @@ const processCallback = catchAsync(async (req, res) => {
       `Batch: ${batchId} generation completed! Total Processed: ${genBatch[batchId].length}`
     );
   }
+
+  res.status(200).send({
+    status: 'success',
+    batchId,
+    callback: {
+      response: req.body,
+    },
+  });
 });
 
 export default {

@@ -1,7 +1,6 @@
 import chai from 'chai';
 import request from 'supertest';
 import httpStatus from 'http-status';
-import { genBatch } from '../config/config';
 
 const server = request('http://localhost:8080/v1');
 const TEST_PRODUCT_ID = '6646373122099';
@@ -13,8 +12,6 @@ describe('Testing content "/generate" route', () => {
       const response = await server
         .post(`/contents/generate/6646373122099`)
         .send({ isTest: true });
-
-      console.log(response.body);
 
       chai.expect(response.statusCode).to.eql(httpStatus.OK);
       chai
@@ -38,7 +35,7 @@ describe('Testing content "/generate" route', () => {
           '6646373220403',
         ],
       });
-      // console.log(response.body);
+
       chai.expect(response.statusCode).to.eql(httpStatus.OK);
       chai
         .expect(response.body)
