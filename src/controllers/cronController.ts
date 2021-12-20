@@ -1,4 +1,5 @@
 import config, { genBatch } from '../config/config';
+import { IBlog } from 'shopify-api-node';
 import shopifyService from '../services/shopifyService';
 import htmlUtil from '../utils/htmlUtil';
 
@@ -17,7 +18,7 @@ const checkCompletedTransactions = async () => {
         let html = await htmlUtil.generateHTML(articleTitle, genBatch[batchId]);
 
         // get shopify blog Id
-        const shopifyBlogs = await shopifyService.getBlogIds();
+        const shopifyBlogs: IBlog[] = await shopifyService.getBlogIds();
         const blogId = shopifyBlogs[0].id;
 
         // send html to shopify blog

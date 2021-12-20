@@ -2,7 +2,7 @@ import path from 'path';
 import * as ejs from 'ejs';
 import { promises as fs } from 'fs';
 
-export const generateHTML = async (storeName, data) => {
+export const generateHTML = async (storeName, data): Promise<string> => {
   // 1. get the HTML template
   const template = await fs.readFile(
     path.join(__dirname, '../views/template.ejs'),
@@ -13,7 +13,7 @@ export const generateHTML = async (storeName, data) => {
   const { results } = data;
 
   //3. dynamically render the html
-  const html = ejs.render(template, { storeName, results });
+  const html: string = ejs.render(template, { storeName, results });
   return html;
 };
 

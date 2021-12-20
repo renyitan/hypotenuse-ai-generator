@@ -1,4 +1,5 @@
 import httpStatus from 'http-status';
+import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { IProduct } from 'shopify-api-node';
 
@@ -7,18 +8,22 @@ import config from '../config/config';
 import hypotenuseService from '../services/hypotenuseService';
 import catchAsync from '../utils/catchAsync';
 import { genBatch } from '../config/config';
+import { MetaDataObject, GeneratorRequest } from '../models';
 
 const webhookURL = config.baseURL + '/contents/callback';
 
-function _mapProductToRequest(productDetail: IProduct, batchId: string) {
+function _mapProductToRequest(
+  productDetail: IProduct,
+  batchId: string
+): GeneratorRequest {
   // construct metadata
-  const metaDataObject = {
+  const metaDataObject: MetaDataObject = {
     batchId,
     productTitle: productDetail.title,
     productId: productDetail.id,
   };
   // construct request body
-  const generatorRequest = {
+  const generatorRequest: GeneratorRequest = {
     callback_url: webhookURL,
     product_data: {
       Brand: productDetail.vendor,
@@ -47,16 +52,19 @@ function _mapProductToRequest(productDetail: IProduct, batchId: string) {
 /**
  * Generate product content of a single product by Id
  */
-const generateContent = catchAsync(async (req, res) => {
+const generateContent = catchAsync(async (req: Request, res: Response) => {
   const { productId } = req.params;
   const batchId = uuidv4();
   // 1. get product detail
-  const productDetail = await ShopifyService.getProductDetail(
+  const productDetail: IProduct = await ShopifyService.getProductDetail(
     parseInt(productId)
   );
 
   // 3. construct request body
-  const generatorRequest = _mapProductToRequest(productDetail, batchId);
+  const generatorRequest: GeneratorRequest = _mapProductToRequest(
+    productDetail,
+    batchId
+  );
 
   // include the genBatch details
   genBatch[batchId] = {
@@ -80,12 +88,15 @@ const generateContents = catchAsync(async (req, res) => {
     (productId) =>
       new Promise(async (resolve, reject) => {
         // 1. get product detail
-        const productDetail = await ShopifyService.getProductDetail(
+        const productDetail: IProduct = await ShopifyService.getProductDetail(
           parseInt(productId)
         );
 
         // construct request body
-        const generatorRequest = _mapProductToRequest(productDetail, batchId);
+        const generatorRequest: GeneratorRequest = _mapProductToRequest(
+          productDetail,
+          batchId
+        );
 
         try {
           let response = await hypotenuseService.generateContent(
@@ -99,7 +110,7 @@ const generateContents = catchAsync(async (req, res) => {
   );
 
   // wait for all async calls to complete
-  const results = await Promise.allSettled(promises);
+  const results = await Promise.all(promises);
 
   genBatch[batchId] = {
     batchId: batchId,
@@ -108,7 +119,7 @@ const generateContents = catchAsync(async (req, res) => {
   };
 
   console.log(
-    `[API: /generate] Processed ${results.length}/${genBatch[batchId].length} products successfully `,
+    `Processed ${results.length}/${genBatch[batchId].length} products successfully `,
     genBatch
   );
 
@@ -124,7 +135,7 @@ const processCallback = catchAsync(async (req, res) => {
   const { batchId, productTitle, productId } = JSON.parse(metadata);
 
   // 2. get the generated description and map to product
-  const descriptions = req.body.descriptions;
+  const descriptions: any[] = req.body.descriptions;
 
   genBatch[batchId]['results'].push({
     productId,

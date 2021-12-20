@@ -1,4 +1,4 @@
-import Shopify from 'shopify-api-node';
+import Shopify, { IProduct, IBlog, IArticle } from 'shopify-api-node';
 import config from '../config/config';
 
 /**
@@ -10,16 +10,20 @@ const shopify = new Shopify({
   password: config.shopify.apiSecret,
 });
 
-const getProductDetail = async (productId: number) => {
+const getProductDetail = async (productId: number): Promise<IProduct> => {
   return await shopify.product.get(productId);
 };
 
-const getBlogIds = async () => {
+const getBlogIds = async (): Promise<IBlog[]> => {
   return await shopify.blog.list();
 };
 
-const postArticle = async (blogId, articleTitle, articleHTMLbody) => {
-  let response = await shopify.article.create(blogId, {
+const postArticle = async (
+  blogId,
+  articleTitle,
+  articleHTMLbody
+): Promise<IArticle> => {
+  let response: IArticle = await shopify.article.create(blogId, {
     body_html: articleHTMLbody,
     author: 'Renyi Tan',
     title: articleTitle,

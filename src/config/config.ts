@@ -1,3 +1,4 @@
+import { GenerationBatch } from './../models';
 /** @format */
 
 import path from 'path';
@@ -26,4 +27,4 @@ export default {
   baseURL: process.env.BASE_URL || '',
 };
 
-export const genBatch = {};
+export const genBatch: GenerationBatch = {};
