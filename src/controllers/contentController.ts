@@ -52,6 +52,24 @@ function _mapProductToRequest(
 }
 
 /**
+ * Retry generate product content for a single product by id
+ */
+function retryGenerateContent(productId: string, batchId: string) {
+  try {
+    const productDetail: IProduct = await ShopifyService.getProductDetail(
+      parseInt(productId)
+    );
+  } catch (error: any) {
+    // this means the processing of this product failed, we push it to errors[]
+
+    genBatch[batchId].processed.push({
+      productId,
+    });
+    throw new ApiError(404, error.message);
+  }
+}
+
+/**
  * Generate product content of a single product by Id
  */
 const generateContent = catchAsync(async (req: Request, res: Response) => {
@@ -93,6 +111,11 @@ const generateContent = catchAsync(async (req: Request, res: Response) => {
       errors: genBatch[batchId].errors,
     });
   } catch (error: any) {
+    // this means the processing of this product failed, we push it to errors[]
+
+    genBatch[batchId].processed.push({
+      productId,
+    });
     throw new ApiError(404, error.message);
   }
 });
@@ -205,4 +228,5 @@ export default {
   generateContent,
   generateContents,
   processCallback,
+  retryGenerateContent,
 };
