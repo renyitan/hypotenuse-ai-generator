@@ -47,6 +47,7 @@ app.use(error.handler);
 cron.schedule('*/10 * * * * *', async () => {
   // console.log('[Cron] Running a task every 10 s');
   cronController.checkCompletedTransactions();
+  cronController.checkForTransactionErrors();
 });
 
 app.listen(8080, () => console.log(`🚀 Server started on port ${8080} (dev)`));

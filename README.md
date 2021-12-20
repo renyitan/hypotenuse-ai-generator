@@ -6,7 +6,7 @@
 
 ```js
 // in root folder
-cp.env.example.env;
+cp .env.example .env;
 ```
 
 2. **Install Node dependencies**
@@ -87,3 +87,9 @@ Node.js/Express is single-threaded and blocking. That means operations in the ev
 - **Better caching mechanism** <br>
 As this is a quick project, I have used an in-memory hash to cache the succesful content generations while waiting for the rest to complete. This presents a risk as the in-memory cache will completely be wiped out if the server restarts during the transaction process or while waiting for other transactions to complete. I'll recommend using a more sophisticated server-side caching mechanism such as Redis Cache to persist data. 
 
+# Other Observations
+- **"Cold start" of Generator API** <br>
+I noticed at certain moments, the Generator API may take some time to boot up or respond, especially when it has been idle for awhile, it's observed to take about 1-2s to respond a request.
+
+# Thank you
+Thank you Krishna and Joshua for the opportunity to work on this. Please reach out to me for any clarifications 😊

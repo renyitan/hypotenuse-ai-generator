@@ -59,4 +59,5 @@ const checkForTransactionErrors = async () => {
 
 export default {
   checkCompletedTransactions,
+  checkForTransactionErrors,
 };
