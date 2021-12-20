@@ -54,14 +54,30 @@ function _mapProductToRequest(
 /**
  * Retry generate product content for a single product by id
  */
-function retryGenerateContent(productId: string, batchId: string) {
+async function retryGenerateContent(productId: string, batchId: string) {
   try {
     const productDetail: IProduct = await ShopifyService.getProductDetail(
       parseInt(productId)
     );
+
+    const generatorRequest: GeneratorRequest = _mapProductToRequest(
+      productDetail,
+      batchId
+    );
+
+    let response = await hypotenuseService.generateContent(generatorRequest);
+    genBatch[batchId].processed.push(response);
+
+    // remove from errors
+    genBatch[batchId].errors = genBatch[batchId].errors.filter(
+      (failedId) => productId != failedId
+    );
+
+    // and push into processed
+    genBatch[batchId].processed.push(response);
+    return;
   } catch (error: any) {
     // this means the processing of this product failed, we push it to errors[]
-
     genBatch[batchId].processed.push({
       productId,
     });
@@ -174,7 +190,7 @@ const generateContents = catchAsync(async (req, res) => {
   );
 
   // wait for all async calls to complete
-  await Promise.all(promises);
+  await Promise.allSettled(promises);
 
   console.log(
     `Processed ${genBatch[batchId].processed.length}/${genBatch[batchId].length} products successfully `,
