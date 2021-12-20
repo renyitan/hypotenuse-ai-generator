@@ -18,11 +18,13 @@
   "homepage": "https://github.com/renyitan/hypotenuse-dev-task#readme",
   "dependencies": {
     "@shopify/shopify-api": "^2.0.0",
+    "axios": "^0.24.0",
     "bcrypt": "^5.0.1",
     "body-parser": "^1.19.1",
     "express": "^4.17.2",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^6.1.2",
+    "qs": "^6.10.2",
     "shopify-api-node": "^3.8.1",
     "typescript": "^4.5.4"
   },

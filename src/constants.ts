@@ -84,6 +84,7 @@ const products = [
   },
 ];
 
+
 const descriptions = [
   {
     description_id: 'c360a848-7b06-4ef1-afd2-6a3c24904e97',
