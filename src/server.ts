@@ -3,9 +3,9 @@ import Shopify from 'shopify-api-node';
 import axios from 'axios';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import * as ejs from 'ejs';
-import { promises as fs } from 'fs';
 import cron from 'node-cron';
+
+import { generateHTML } from './utils';
 
 const SHOPIFY_API_KEY = '73976a39cc2b0c6e7b5866c7c882f943';
 const SHOPIFY_API_SECRET = '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';
@@ -14,39 +14,61 @@ const HYPOTENUSE_API_KEY = 'e4b06736-9acb-4da2-be43-11a73ef27373';
 
 const app = express();
 const PORT = 8080;
+
 axios.defaults.baseURL = 'https://app.hypotenuse.ai/api/v1';
 axios.defaults.headers.common['X-API-KEY'] = HYPOTENUSE_API_KEY;
-const CALLBACK_URL = 'https://4147-116-15-168-68.ngrok.io/generation-callback';
+const CALLBACK_URL = 'https://4147-116-15-168-68.ngrok.io/callback';
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 app.set('views', path.join(__dirname, 'views'));
 
+/**
+ * Initialise Shopify NodeSDK
+ */
 const shopify = new Shopify({
   shopName: SHOPIFY_SHOP_NAME,
   apiKey: SHOPIFY_API_KEY,
   password: SHOPIFY_API_SECRET,
 });
 
-// create the batch data structure
+// Create the batch data structure
 const genBatch = {};
 
 /**
- * Server Routes
+ * Type: API Endpoint
+ * Server Health Check
  */
 app.get('/', (req, res, next) => {
   res.json({ message: "renyi's dev things" });
 });
 
-async function getProductDetail(productId: string) {
-  const productDetail = await shopify.product.get(parseInt(productId));
+/**
+ * Type: Method
+ * Get details of one Shopify product by Id
+ */
+async function getProductDetail(productId: number) {
+  const productDetail = await shopify.product.get(productId);
   return productDetail;
 }
 
+/**
+ * Type: API Endpoint
+ * Get details of one Shopify product by Id
+ */
+app.get('/products/:productId', async (req, res, next) => {
+  const { productId } = req.params;
+  const product = await getProductDetail(parseInt(productId));
+  res.status(200).send(product);
+});
+
+/**
+ * Type: Method
+ * Generate product content of a single product by Id
+ */
 async function generateProductContent(productId: string, batchId: string) {
   // 1. get product details
-  const productDetail = await shopify.product.get(parseInt(productId));
+  const productDetail = await getProductDetail(parseInt(productId));
   // 2. construct meta data
   const metaDataObject = {
     batchId,
@@ -80,22 +102,19 @@ async function generateProductContent(productId: string, batchId: string) {
   // 2. send product details to generator
   try {
     let response = await axios.post('generations/create', reqBody);
-    console.log(`sent ${productDetail.title} to generator!`);
+    console.log(
+      `[Fn: generateProductContent] Sent ${productDetail.title} to generator!`
+    );
     return response.data;
   } catch (error: any) {
-    console.log('Error', error.response.data);
+    console.log('[Fn: generateProductContent] Error', error.response.data);
   }
 }
 
-// Get details of one product by Id
-app.get('/products/:productId', async (req, res, next) => {
-  const { productId } = req.params;
-
-  const product = await shopify.product.get(parseInt(productId));
-  res.status(200).send(product);
-});
-
-// Generate content for one product by Id
+/**
+ * Type: API Endpoint
+ * Generate content for one product by Id
+ */
 app.post('/generate/:productId', async (req, res, next) => {
   const { productId } = req.params;
   const batchId = uuidv4();
@@ -111,7 +130,10 @@ app.post('/generate/:productId', async (req, res, next) => {
   res.send(response);
 });
 
-// Generate contents for multiple products by id[]
+/**
+ * Type: API Endpoint
+ * Generate contents for multiple products by id[]
+ */
 app.post('/generate', async (req, res, next) => {
   const { productIds } = req.body;
   const batchId = uuidv4();
@@ -127,7 +149,8 @@ app.post('/generate', async (req, res, next) => {
       })
   );
 
-  const results = await Promise.all(promises);
+  // wait for all async calls to complete
+  const results = await Promise.allSettled(promises);
 
   genBatch[batchId] = {
     batchId: batchId,
@@ -135,30 +158,24 @@ app.post('/generate', async (req, res, next) => {
     results: [],
   };
 
-  console.log('bulk - gen batch', genBatch);
-  res.status(200).send(`Process ${productIds.length} products successfully`);
-});
-
-const generateHTML = async (storeName, data) => {
-  // 1. get the HTML template
-  const template = await fs.readFile(
-    path.join(__dirname, '/views/template.ejs'),
-    'utf-8'
+  console.log(
+    `[API: /generate] Processed ${results.length}/${genBatch[batchId].length} products successfully `,
+    genBatch
   );
 
-  //2. grab the data
-  const { results } = data;
-
-  //3. dynamically render the html
-  const html = ejs.render(template, { storeName, results });
-  return html;
-};
+  res
+    .status(200)
+    .send(
+      `[API: /generate] Processed ${productIds.length} products successfully`
+    );
+});
 
 /**
- * Call back end point
+ * Type: API Endpoint
+ * Callback endpoint from Generator API
  */
-app.post('/generation-callback', async (req, res, next) => {
-  console.log('callback received');
+app.post('/callback', async (req, res, next) => {
+  console.log('[API: /callback] Callback received...');
 
   // 1. get the metadata
   const { metadata } = req.body;
@@ -172,20 +189,21 @@ app.post('/generation-callback', async (req, res, next) => {
     content: descriptions[0].content,
   });
 
-  console.log(genBatch);
+  console.log('[API: /callback] ', genBatch);
 
   if (genBatch[batchId].length === genBatch[batchId]['results'].length) {
     console.log(
-      `Batch: ${batchId} generation completed! Total Processed: ${genBatch[batchId].length}`
+      `[API: /callback] Batch: ${batchId} generation completed! Total Processed: ${genBatch[batchId].length}`
     );
   }
 });
 
 /**
- * Cron Job
+ * Type: Cron Job
+ * Checks for completed batch transactions in a fixed frequency
  */
 cron.schedule('*/15 * * * * *', async () => {
-  console.log('running a task every 10 s');
+  // console.log('[Cron] Running a task every 15 s');
 
   for (let batchId in genBatch) {
     if (batchId) {
@@ -195,11 +213,11 @@ cron.schedule('*/15 * * * * *', async () => {
         currentBatch &&
         currentBatch.length === currentBatch['results'].length
       ) {
-        console.log(`processing batch: ${batchId}`);
+        console.log(`[Cron] Processing completed batch: ${batchId}`);
         const STORE_NAME = "Renyi's Fashion Store";
         // generate the html string
         let html = await generateHTML(STORE_NAME, genBatch[batchId]);
-        console.log('html', html);
+
         // get shopify blog Id
         const shopifyBlogs = await shopify.blog.list();
         const blogId = shopifyBlogs[0].id;
@@ -210,7 +228,7 @@ cron.schedule('*/15 * * * * *', async () => {
           author: 'Renyi Tan',
           title: STORE_NAME,
         });
-        console.log('success');
+        console.log('[Cron] Successfully uploaded to Shopify blog');
         // delete the completed batch from memory
         delete genBatch[batchId];
       }
@@ -219,7 +237,7 @@ cron.schedule('*/15 * * * * *', async () => {
 });
 
 /**
- * Listener
+ * Server Listener
  */
 app.listen(PORT, () => {
   console.log(`Running on port: ${PORT}`);
