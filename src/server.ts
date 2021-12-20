@@ -1,10 +1,10 @@
 import express from 'express';
-// import Shopify from '@shopify/shopify-api';
-// const Shopify = require('shopify-api-node');
 import Shopify from 'shopify-api-node';
-import Constants from './constants';
 import axios from 'axios';
-
+import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
+import * as ejs from 'ejs';
+import { promises as fs } from 'fs';
 const SHOPIFY_API_KEY = '73976a39cc2b0c6e7b5866c7c882f943';
 const SHOPIFY_API_SECRET = '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';
 const SHOPIFY_SHOP_NAME = 'renyi-hypotenuse-1';
@@ -13,13 +13,13 @@ const HYPOTENUSE_API_KEY = 'e4b06736-9acb-4da2-be43-11a73ef27373';
 const app = express();
 const PORT = 8080;
 axios.defaults.baseURL = 'https://app.hypotenuse.ai/api/v1';
-axios.defaults.headers.common['X-API-KEY'] =
-  'e4b06736-9acb-4da2-be43-11a73ef27373';
-
-const CALLBACK_URL = 'https://7568-116-15-168-68.ngrok.io/generation-callback';
+axios.defaults.headers.common['X-API-KEY'] = HYPOTENUSE_API_KEY;
+const CALLBACK_URL = 'https://0815-116-15-168-68.ngrok.io/generation-callback';
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.set('views', path.join(__dirname, 'views'));
 
 const shopify = new Shopify({
   shopName: SHOPIFY_SHOP_NAME,
@@ -27,13 +27,9 @@ const shopify = new Shopify({
   password: SHOPIFY_API_SECRET,
 });
 
-const productIds = [
-  '6646373154867',
-  '6646373122099',
-  // '6646373285939',
-  // '6646373187635',
-  // '6646373220403',
-];
+// create the batch data structure
+const genBatch = {};
+
 /**
  * Server Routes
  */
@@ -46,10 +42,17 @@ async function getProductDetail(productId: string) {
   return productDetail;
 }
 
-async function generateProductContent(productId: string) {
+async function generateProductContent(productId: string, batchId: string) {
   // 1. get product details
   const productDetail = await shopify.product.get(parseInt(productId));
-  const requestData = {
+  // 2. construct meta data
+  const metaDataObject = {
+    batchId,
+    productTitle: productDetail.title,
+    productId: productDetail.id,
+  };
+  // 3. construct request body
+  const reqBody = {
     callback_url: CALLBACK_URL,
     product_data: {
       Brand: productDetail.vendor,
@@ -69,32 +72,69 @@ async function generateProductContent(productId: string) {
       imgSrc: 'ImageURL1',
       tags: ['Specification 1'],
     },
-    metadata: '',
+    metadata: JSON.stringify(metaDataObject),
     test: false,
   };
   // 2. send product details to generator
   try {
-    let response = await axios.post('generations/create', requestData);
+    let response = await axios.post('generations/create', reqBody);
+    console.log(`sent ${productDetail.title} to generator!`);
     return response.data;
   } catch (error: any) {
     console.log('Error', error.response.data);
   }
 }
 
+// Get details of one product by Id
 app.get('/products/:productId', async (req, res, next) => {
   const { productId } = req.params;
+
   const product = await shopify.product.get(parseInt(productId));
   res.status(200).send(product);
 });
 
-app.get('/products', async (req: any, res, next) => {
-  const { productIds } = req.body;
-});
-
+// Generate content for one product by Id
 app.post('/generate/:productId', async (req, res, next) => {
   const { productId } = req.params;
-  let response = await generateProductContent(productId);
+  const batchId = uuidv4();
+  let response = await generateProductContent(productId, batchId);
+
+  // include the genBatch details
+  genBatch[batchId] = {
+    batchId: batchId,
+    length: 1,
+    results: [],
+  };
+
   res.send(response);
+});
+
+// Generate contents for multiple products by id[]
+app.post('/generate', async (req, res, next) => {
+  const { productIds } = req.body;
+  const batchId = uuidv4();
+  const promises = productIds.map(
+    (productId) =>
+      new Promise(async (resolve, reject) => {
+        try {
+          let response = await generateProductContent(productId, batchId);
+          resolve(response);
+        } catch (error) {
+          reject('error');
+        }
+      })
+  );
+
+  const results = await Promise.all(promises);
+
+  genBatch[batchId] = {
+    batchId: batchId,
+    length: productIds.length,
+    results: [],
+  };
+
+  console.log('bulk - gen batch', genBatch);
+  res.status(200).send(`Process ${productIds.length} products successfully`);
 });
 
 /**
@@ -102,33 +142,65 @@ app.post('/generate/:productId', async (req, res, next) => {
  */
 app.post('/generation-callback', (req, res, next) => {
   console.log('callback received');
-  console.log('Callback', req.body);
 
-  console.log('creating html body...');
-  let html = '<div>';
-  html += '<h1>example store</h1>';
-  html += '<ol>';
+  // 1. get the metadata
+  const { metadata } = req.body;
+  const { batchId, productTitle, productId } = JSON.parse(metadata);
+
+  // 2. get the generated description and map to product
   const descriptions = req.body.descriptions;
-  html += '<li>';
-  html += `Product <br><br>`;
-  html += descriptions[0].content;
-  html += '</li><br>';
+  genBatch[batchId]['results'].push({
+    productId,
+    productTitle,
+    content: descriptions[0].content,
+  });
 
-  html += '</ol>';
-  html += '</div>';
+  console.log(genBatch);
 
-  console.log(html);
+  if (genBatch[batchId].length === genBatch[batchId]['results'].length) {
+    console.log(`Batch: ${batchId} generation completed`);
+    console.log(genBatch[batchId]);
+
+    // delete genBatch[batchId];
+  }
 });
 
+function convertToHTML(results: any[]) {
+  let stack: string[] = [];
+  let html = '<div>';
+  stack.push('/<div>');
+
+  // add shop title
+  html += '<h1></h1>';
+
+  html += '<ol>';
+  stack.push('</ol>');
+}
+
+const generateHTML = async () => {
+  const template = await fs.readFile(
+    path.join(__dirname, '/views/template.ejs'),
+    'utf-8'
+  );
+
+  let shopName = 'Fashion Store';
+
+  console.log(template);
+  const html = ejs.render(template, { shopName });
+  console.log(html);
+};
+
+generateHTML();
+
+// console.log('creating html body...');
 // let html = '<div>';
 // html += '<h1>example store</h1>';
 // html += '<ol>';
-// Constants.descriptions.forEach((desc, index) => {
-//   html += '<li>';
-//   html += `Product ${index} <br><br>`;
-//   html += desc.content;
-//   html += '</li><br>';
-// });
+// const descriptions = req.body.descriptions;
+// html += '<li>';
+// html += `Product <br><br>`;
+// html += descriptions[0].content;
+// html += '</li><br>';
 
 // html += '</ol>';
 // html += '</div>';
