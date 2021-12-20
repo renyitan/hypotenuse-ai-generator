@@ -27,4 +27,4 @@ export default {
   baseURL: process.env.BASE_URL || '',
 };
 
-export const genBatch: GenerationBatch = {};
+export let genBatch: { [batchId: string]: GenerationBatch | any } = {};

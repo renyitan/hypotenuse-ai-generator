@@ -79,14 +79,18 @@ const generateContent = catchAsync(async (req: Request, res: Response) => {
       batchId: batchId,
       length: 1,
       results: [],
+      processed: [],
+      errors: [],
     };
     let response = await hypotenuseService.generateContent(generatorRequest);
+    genBatch[batchId].processed.push(response);
 
     res.status(200).send({
       batchId: batchId,
       length: 1,
       message: `Processed 1 product successfully`,
-      processed: [response],
+      processed: genBatch[batchId].processed,
+      errors: genBatch[batchId].errors,
     });
   } catch (error: any) {
     throw new ApiError(404, error.message);
@@ -107,6 +111,15 @@ const generateContents = catchAsync(async (req, res) => {
 
   const batchId = uuidv4();
 
+  // create the generation batch object
+  genBatch[batchId] = {
+    batchId: batchId,
+    length: productIds.length,
+    results: [],
+    processed: [],
+    errors: [],
+  };
+
   const promises = productIds.map(
     (productId) =>
       new Promise(async (resolve, reject) => {
@@ -125,32 +138,32 @@ const generateContents = catchAsync(async (req, res) => {
           let response = await hypotenuseService.generateContent(
             generatorRequest
           );
+          genBatch[batchId].processed.push(response);
           resolve(response);
         } catch (error) {
+          // this means the processing of this product failed, we push it to errors[]
+          genBatch[batchId].processed.push({
+            productId,
+          });
           reject('error');
         }
       })
   );
 
   // wait for all async calls to complete
-  const processed = await Promise.all(promises);
-
-  genBatch[batchId] = {
-    batchId: batchId,
-    length: productIds.length,
-    results: [],
-  };
+  await Promise.all(promises);
 
   console.log(
-    `Processed ${processed.length}/${genBatch[batchId].length} products successfully `,
+    `Processed ${genBatch[batchId].processed.length}/${genBatch[batchId].length} products successfully `,
     genBatch
   );
 
   res.status(200).send({
     batchId: batchId,
     length: productIds.length,
-    processed,
-    message: `Processed ${productIds.length} products successfully`,
+    processed: genBatch[batchId].processed,
+    errors: genBatch[batchId].errors,
+    message: `Processed ${genBatch[batchId].processed.length}/${productIds.length} products successfully`,
   });
 });
 

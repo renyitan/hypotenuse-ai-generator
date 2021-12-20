@@ -26,4 +26,6 @@ export interface GenerationBatch {
   batchId?: string;
   length?: number;
   results?: any[];
+  processed?: any[];
+  errors?: any[];
 }

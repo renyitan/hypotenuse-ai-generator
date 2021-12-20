@@ -22,7 +22,13 @@ describe('Testing contents "/contents" route', () => {
       chai.expect(response.statusCode).to.eql(httpStatus.OK);
       chai
         .expect(response.body)
-        .to.have.all.keys('batchId', 'length', 'message', 'processed');
+        .to.have.all.keys(
+          'batchId',
+          'length',
+          'message',
+          'processed',
+          'errors'
+        );
       chai.expect(response.body.length).to.eql(1);
       chai.expect(response.body.processed.length).to.eql(1);
     });
@@ -38,7 +44,13 @@ describe('Testing contents "/contents" route', () => {
       chai.expect(response.statusCode).to.eql(httpStatus.OK);
       chai
         .expect(response.body)
-        .to.have.all.keys('batchId', 'length', 'message', 'processed');
+        .to.have.all.keys(
+          'batchId',
+          'length',
+          'message',
+          'processed',
+          'errors'
+        );
       chai.expect(response.body.length).to.eql(5);
       chai.expect(response.body.processed.length).to.eql(5);
     });
