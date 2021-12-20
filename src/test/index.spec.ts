@@ -10,7 +10,6 @@ describe('Testing health check route', () => {
   describe(`GET "/status"`, () => {
     it('should get back status 200', async () => {
       const response = await server.get(`/status`);
-      console.log(response.statusCode);
       chai.expect(response.statusCode).to.eql(httpStatus.OK);
     });
   });

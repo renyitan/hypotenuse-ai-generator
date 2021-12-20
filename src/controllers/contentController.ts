@@ -14,7 +14,8 @@ const webhookURL = config.baseURL + '/contents/callback';
 
 function _mapProductToRequest(
   productDetail: IProduct,
-  batchId: string
+  batchId: string,
+  isTest?: boolean
 ): GeneratorRequest {
   // construct metadata
   const metaDataObject: MetaDataObject = {
@@ -44,7 +45,7 @@ function _mapProductToRequest(
       tags: ['Specification 1'],
     },
     metadata: JSON.stringify(metaDataObject),
-    test: false,
+    test: isTest || false,
   };
   return generatorRequest;
 }
@@ -54,6 +55,7 @@ function _mapProductToRequest(
  */
 const generateContent = catchAsync(async (req: Request, res: Response) => {
   const { productId } = req.params;
+  const { isTest = false } = req.body;
   const batchId = uuidv4();
   // 1. get product detail
   const productDetail: IProduct = await ShopifyService.getProductDetail(
@@ -63,7 +65,8 @@ const generateContent = catchAsync(async (req: Request, res: Response) => {
   // 3. construct request body
   const generatorRequest: GeneratorRequest = _mapProductToRequest(
     productDetail,
-    batchId
+    batchId,
+    isTest
   );
 
   // include the genBatch details
@@ -74,7 +77,13 @@ const generateContent = catchAsync(async (req: Request, res: Response) => {
   };
 
   let response = await hypotenuseService.generateContent(generatorRequest);
-  res.send(response);
+
+  res.status(200).send({
+    batchId: batchId,
+    length: 1,
+    message: `Processed 1 product successfully`,
+    processed: [response],
+  });
 });
 
 /**
@@ -110,7 +119,7 @@ const generateContents = catchAsync(async (req, res) => {
   );
 
   // wait for all async calls to complete
-  const results = await Promise.all(promises);
+  const processed = await Promise.all(promises);
 
   genBatch[batchId] = {
     batchId: batchId,
@@ -119,11 +128,16 @@ const generateContents = catchAsync(async (req, res) => {
   };
 
   console.log(
-    `Processed ${results.length}/${genBatch[batchId].length} products successfully `,
+    `Processed ${processed.length}/${genBatch[batchId].length} products successfully `,
     genBatch
   );
 
-  res.status(200).send(`Processed ${productIds.length} products successfully`);
+  res.status(200).send({
+    batchId: batchId,
+    length: productIds.length,
+    results: processed,
+    message: `Processed ${productIds.length} products successfully`,
+  });
 });
 
 /**
