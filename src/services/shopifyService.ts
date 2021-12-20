@@ -10,10 +10,25 @@ const shopify = new Shopify({
   password: config.shopify.apiSecret,
 });
 
-async function getProductDetail(productId: number) {
+const getProductDetail = async (productId: number) => {
   return await shopify.product.get(productId);
-}
+};
+
+const getBlogIds = async () => {
+  return await shopify.blog.list();
+};
+
+const postArticle = async (blogId, articleTitle, articleHTMLbody) => {
+  let response = await shopify.article.create(blogId, {
+    body_html: articleHTMLbody,
+    author: 'Renyi Tan',
+    title: articleTitle,
+  });
+  return response;
+};
 
 export default {
   getProductDetail,
+  getBlogIds,
+  postArticle,
 };

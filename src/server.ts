@@ -5,7 +5,7 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import cron from 'node-cron';
 
-import { generateHTML } from './utils';
+import { generateHTML } from './utils/utils';
 
 const SHOPIFY_API_KEY = '73976a39cc2b0c6e7b5866c7c882f943';
 const SHOPIFY_API_SECRET = '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';

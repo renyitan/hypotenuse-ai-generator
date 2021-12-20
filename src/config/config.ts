@@ -25,3 +25,5 @@ export default {
 
   baseURL: process.env.BASE_URL || '',
 };
+
+export const genBatch = {};

@@ -5,7 +5,7 @@ import { promises as fs } from 'fs';
 export const generateHTML = async (storeName, data) => {
   // 1. get the HTML template
   const template = await fs.readFile(
-    path.join(__dirname, '/views/template.ejs'),
+    path.join(__dirname, '../views/template.ejs'),
     'utf-8'
   );
 

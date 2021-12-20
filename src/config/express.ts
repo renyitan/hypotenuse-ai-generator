@@ -3,11 +3,13 @@ import cors from 'cors';
 import helmet from 'helmet';
 import httpStatus from 'http-status';
 import morgan from 'morgan';
+import cron from 'node-cron';
 
 import config from './config';
 import ApiError from '../errors/ApiError';
 import routes from '../routes/v1/index';
 import error from '../middlewares/error';
+import cronController from '../controllers/cronController';
 
 /**
  * Express instance
@@ -40,6 +42,12 @@ app.use((req, res, next) => {
 app.use(error.converter);
 // handle error
 app.use(error.handler);
+
+// set up cron service
+cron.schedule('*/5 * * * * *', async () => {
+  // console.log('[Cron] Running a task every 15 s');
+  cronController.checkCompletedTransactions();
+});
 
 app.listen(8080, () => console.log(`🚀 Server started on port ${8080} (dev)`));
 

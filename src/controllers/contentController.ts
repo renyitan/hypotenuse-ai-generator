@@ -1,13 +1,16 @@
 import httpStatus from 'http-status';
 import { v4 as uuidv4 } from 'uuid';
+import { IProduct } from 'shopify-api-node';
 
 import ShopifyService from '../services/shopifyService';
 import config from '../config/config';
 import hypotenuseService from '../services/hypotenuseService';
 import catchAsync from '../utils/catchAsync';
+import { genBatch } from '../config/config';
+
 const webhookURL = config.baseURL + '/contents/callback';
 
-function _mapProductToRequest(productDetail, batchId: string) {
+function _mapProductToRequest(productDetail: IProduct, batchId: string) {
   // construct metadata
   const metaDataObject = {
     batchId,
@@ -56,11 +59,11 @@ const generateContent = catchAsync(async (req, res) => {
   const generatorRequest = _mapProductToRequest(productDetail, batchId);
 
   // include the genBatch details
-  // genBatch[batchId] = {
-  //   batchId: batchId,
-  //   length: 1,
-  //   results: [],
-  // };
+  genBatch[batchId] = {
+    batchId: batchId,
+    length: 1,
+    results: [],
+  };
 
   let response = await hypotenuseService.generateContent(generatorRequest);
   res.send(response);
@@ -98,16 +101,16 @@ const generateContents = catchAsync(async (req, res) => {
   // wait for all async calls to complete
   const results = await Promise.allSettled(promises);
 
-  // genBatch[batchId] = {
-  //   batchId: batchId,
-  //   length: productIds.length,
-  //   results: [],
-  // };
+  genBatch[batchId] = {
+    batchId: batchId,
+    length: productIds.length,
+    results: [],
+  };
 
-  // console.log(
-  //   `[API: /generate] Processed ${results.length}/${genBatch[batchId].length} products successfully `,
-  //   genBatch
-  // );
+  console.log(
+    `[API: /generate] Processed ${results.length}/${genBatch[batchId].length} products successfully `,
+    genBatch
+  );
 
   res.status(200).send(`Processed ${productIds.length} products successfully`);
 });
@@ -119,23 +122,23 @@ const processCallback = catchAsync(async (req, res) => {
   // 1. get the metadata
   const { metadata } = req.body;
   const { batchId, productTitle, productId } = JSON.parse(metadata);
-  console.log(req.body);
 
   // 2. get the generated description and map to product
   const descriptions = req.body.descriptions;
-  // genBatch[batchId]['results'].push({
-  //   productId,
-  //   productTitle,
-  //   content: descriptions[0].content,
-  // });
 
-  // console.log('[API: /callback] ', genBatch);
+  genBatch[batchId]['results'].push({
+    productId,
+    productTitle,
+    content: descriptions[0].content,
+  });
 
-  // if (genBatch[batchId].length === genBatch[batchId]['results'].length) {
-  //   console.log(
-  //     `[API: /callback] Batch: ${batchId} generation completed! Total Processed: ${genBatch[batchId].length}`
-  //   );
-  // }
+  console.log('GenBatch', genBatch);
+
+  if (genBatch[batchId].length === genBatch[batchId]['results'].length) {
+    console.log(
+      `Batch: ${batchId} generation completed! Total Processed: ${genBatch[batchId].length}`
+    );
+  }
 });
 
 export default {
