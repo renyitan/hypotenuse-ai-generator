@@ -5,6 +5,7 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import * as ejs from 'ejs';
 import { promises as fs } from 'fs';
+
 const SHOPIFY_API_KEY = '73976a39cc2b0c6e7b5866c7c882f943';
 const SHOPIFY_API_SECRET = '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';
 const SHOPIFY_SHOP_NAME = 'renyi-hypotenuse-1';
@@ -173,16 +174,38 @@ app.post('/generation-callback', async (req, res, next) => {
   console.log(genBatch);
 
   if (genBatch[batchId].length === genBatch[batchId]['results'].length) {
-    console.log(`Batch: ${batchId} generation completed`);
-    const STORE_NAME = "Renyi's Fashion Store";
+    console.log(
+      `Batch: ${batchId} generation completed! Total Processed: ${genBatch[batchId].length}`
+    );
+    // const STORE_NAME = "Renyi's Fashion Store";
 
     // generate the html string
-    let html = await generateHTML(STORE_NAME, genBatch[batchId]);
-    console.log(html);
+    // let html = await generateHTML(STORE_NAME, genBatch[batchId]);
+    // console.log(html);
 
+    // // get shopify blog Id
+    // const shopifyBlogs = await shopify.blog.list();
+    // const blogId = shopifyBlogs[0].id;
+    // const blogTitle = ''
+
+    // send html to shopify blog
+    // let response = await shopify.article.create(blogId, {
+    //   body_html: html,
+    //   author: 'Renyi Tan',
+    //   title: STORE_NAME,
+    // });
+
+    // delete the completed batch from memory
     // delete genBatch[batchId];
   }
 });
+
+// async function getBlog() {
+//   let blog = await shopify.blog.list();
+//   console.log(blog);
+// }
+
+// getBlog();
 
 /**
  * Listener
