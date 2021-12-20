@@ -18,7 +18,7 @@ const generateContent = async (
       generatorRequest
     );
     console.log(
-      ` Sent ${generatorRequest.product_data.ProductTitle} to generator!`
+      `[HypotenuseService] Sent ${generatorRequest.product_data.ProductTitle} to generator!`
     );
     return response.data;
   } catch (error: any) {

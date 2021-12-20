@@ -1,4 +1,6 @@
+import httpStatus from 'http-status';
 import Shopify, { IProduct, IBlog, IArticle } from 'shopify-api-node';
+import ApiError from '../errors/ApiError';
 import config from '../config/config';
 
 /**
@@ -11,11 +13,21 @@ const shopify = new Shopify({
 });
 
 const getProductDetail = async (productId: number): Promise<IProduct> => {
-  return await shopify.product.get(productId);
+  try {
+    const productDetail = await shopify.product.get(productId);
+    return productDetail;
+  } catch (error: any) {
+    throw new ApiError(404, error?.message);
+  }
 };
 
 const getBlogIds = async (): Promise<IBlog[]> => {
-  return await shopify.blog.list();
+  try {
+    const shopifyBlogs = await shopify.blog.list();
+    return shopifyBlogs;
+  } catch (error: any) {
+    throw new ApiError(404, error?.message);
+  }
 };
 
 const postArticle = async (
@@ -23,12 +35,17 @@ const postArticle = async (
   articleTitle,
   articleHTMLbody
 ): Promise<IArticle> => {
-  let response: IArticle = await shopify.article.create(blogId, {
-    body_html: articleHTMLbody,
-    author: 'Renyi Tan',
-    title: articleTitle,
-  });
-  return response;
+  try {
+    let response: IArticle = await shopify.article.create(blogId, {
+      body_html: articleHTMLbody,
+      author: 'Renyi Tan',
+      title: articleTitle,
+    });
+    console.log('[ShopifyService] Successfully uploaded to Shopify blog');
+    return response;
+  } catch (error: any) {
+    throw new ApiError(404, error?.message);
+  }
 };
 
 export default {

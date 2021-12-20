@@ -9,6 +9,7 @@ import hypotenuseService from '../services/hypotenuseService';
 import catchAsync from '../utils/catchAsync';
 import { genBatch } from '../config/config';
 import { MetaDataObject, GeneratorRequest } from '../models';
+import ApiError from '../errors/ApiError';
 
 const webhookURL = config.baseURL + '/contents/callback';
 
@@ -55,35 +56,41 @@ function _mapProductToRequest(
  */
 const generateContent = catchAsync(async (req: Request, res: Response) => {
   const { productId } = req.params;
+  if (!productId) {
+    throw new ApiError(httpStatus[404], 'please provide productId as params');
+  }
   const { isTest = false } = req.body;
   const batchId = uuidv4();
   // 1. get product detail
-  const productDetail: IProduct = await ShopifyService.getProductDetail(
-    parseInt(productId)
-  );
+  try {
+    const productDetail: IProduct = await ShopifyService.getProductDetail(
+      parseInt(productId)
+    );
 
-  // 3. construct request body
-  const generatorRequest: GeneratorRequest = _mapProductToRequest(
-    productDetail,
-    batchId,
-    isTest
-  );
+    // 3. construct request body
+    const generatorRequest: GeneratorRequest = _mapProductToRequest(
+      productDetail,
+      batchId,
+      isTest
+    );
 
-  // include the genBatch details
-  genBatch[batchId] = {
-    batchId: batchId,
-    length: 1,
-    results: [],
-  };
+    // include the genBatch details
+    genBatch[batchId] = {
+      batchId: batchId,
+      length: 1,
+      results: [],
+    };
+    let response = await hypotenuseService.generateContent(generatorRequest);
 
-  let response = await hypotenuseService.generateContent(generatorRequest);
-
-  res.status(200).send({
-    batchId: batchId,
-    length: 1,
-    message: `Processed 1 product successfully`,
-    processed: [response],
-  });
+    res.status(200).send({
+      batchId: batchId,
+      length: 1,
+      message: `Processed 1 product successfully`,
+      processed: [response],
+    });
+  } catch (error: any) {
+    throw new ApiError(404, error.message);
+  }
 });
 
 /**
@@ -91,6 +98,13 @@ const generateContent = catchAsync(async (req: Request, res: Response) => {
  */
 const generateContents = catchAsync(async (req, res) => {
   const { productIds } = req.body;
+  if (!productIds) {
+    throw new ApiError(
+      httpStatus[404],
+      'please provide productIds[] as params'
+    );
+  }
+
   const batchId = uuidv4();
 
   const promises = productIds.map(
@@ -144,7 +158,6 @@ const generateContents = catchAsync(async (req, res) => {
  * Process callback from Generator API
  */
 const processCallback = catchAsync(async (req, res) => {
-  console.log('call back response', req.body);
   // 1. get the metadata
   const { metadata } = req.body;
   const { batchId, productTitle, productId } = JSON.parse(metadata);
@@ -158,7 +171,7 @@ const processCallback = catchAsync(async (req, res) => {
     content: descriptions[0].content,
   });
 
-  console.log('GenBatch', genBatch);
+  console.log('Current GenBatch', genBatch);
 
   if (genBatch[batchId].length === genBatch[batchId]['results'].length) {
     console.log(

@@ -12,7 +12,7 @@ const checkCompletedTransactions = async () => {
         currentBatch &&
         currentBatch.length === currentBatch['results'].length
       ) {
-        console.log(`[Cron] Processing completed batch: ${batchId}`);
+        console.log(`[CronController] Processing completed batch: ${batchId}`);
         const articleTitle = "Renyi's Fashion Store";
         // generate the html string
         let html = await htmlUtil.generateHTML(articleTitle, genBatch[batchId]);
@@ -23,7 +23,6 @@ const checkCompletedTransactions = async () => {
 
         // send html to shopify blog
         await shopifyService.postArticle(blogId, articleTitle, html);
-        console.log('[Cron] Successfully uploaded to Shopify blog');
         // delete the completed batch from memory
         delete genBatch[batchId];
       }
