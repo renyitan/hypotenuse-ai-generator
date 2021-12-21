@@ -185,15 +185,19 @@ const generateContents = catchAsync(async (req, res) => {
           genBatch[batchId].processed.push({
             productId,
           });
-          reject('error');
+          reject(productId);
         }
       })
   );
 
   // wait for all async calls to complete
-  await Promise.allSettled(promises);
+  const settled = await Promise.allSettled(promises);
+  // settled.forEach((promise: any) => {
+  //   console.log('error', promise._settledValueField);
+  //   console.log(promise);
+  // });
 
-  logger.info(
+  console.log(
     `Processed ${genBatch[batchId].processed.length}/${genBatch[batchId].length} products successfully `,
     genBatch
   );
@@ -224,10 +228,10 @@ const processCallback = catchAsync(async (req, res) => {
     content: descriptions[0].content,
   });
 
-  logger.info('Current GenBatch', genBatch);
+  console.log('Current GenBatch', genBatch);
 
   if (genBatch[batchId].length === genBatch[batchId]['results'].length) {
-    logger.info(
+    console.log(
       `Batch: ${batchId} generation completed! Total Processed: ${genBatch[batchId].length}`
     );
   }
