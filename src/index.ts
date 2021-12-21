@@ -5,8 +5,7 @@ import app from './config/express';
 import logger from './config/logger';
 let server;
 
-
-const exitHandler = () => {
+const exitHandler = (): void => {
   if (server) {
     server.close(() => {
       logger.info('Server closed');
@@ -17,7 +16,7 @@ const exitHandler = () => {
   }
 };
 
-const unexpectedErrorHandler = (error) => {
+const unexpectedErrorHandler = (error): void => {
   logger.error(error);
   exitHandler();
 };

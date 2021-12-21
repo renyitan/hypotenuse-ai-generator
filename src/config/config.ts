@@ -1,5 +1,4 @@
-import { GenerationBatch } from './../models';
-/** @format */
+import { GenerationBatch } from '../models';
 
 import path from 'path';
 import dotenv from 'dotenv-safe';

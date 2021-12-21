@@ -10,6 +10,7 @@ import catchAsync from '../utils/catchAsync';
 import { genBatch } from '../config/config';
 import { MetaDataObject, GeneratorRequest } from '../models';
 import ApiError from '../errors/ApiError';
+import logger from '../config/logger';
 
 const webhookURL = config.baseURL + '/contents/callback';
 
@@ -70,7 +71,7 @@ async function retryGenerateContent(productId: string, batchId: string) {
 
     // remove from errors
     genBatch[batchId].errors = genBatch[batchId].errors.filter(
-      (failedId) => productId != failedId
+      (failedId: string) => productId != failedId
     );
 
     // and push into processed
@@ -192,7 +193,7 @@ const generateContents = catchAsync(async (req, res) => {
   // wait for all async calls to complete
   await Promise.allSettled(promises);
 
-  console.log(
+  logger.info(
     `Processed ${genBatch[batchId].processed.length}/${genBatch[batchId].length} products successfully `,
     genBatch
   );
@@ -223,10 +224,10 @@ const processCallback = catchAsync(async (req, res) => {
     content: descriptions[0].content,
   });
 
-  console.log('Current GenBatch', genBatch);
+  logger.info('Current GenBatch', genBatch);
 
   if (genBatch[batchId].length === genBatch[batchId]['results'].length) {
-    console.log(
+    logger.info(
       `Batch: ${batchId} generation completed! Total Processed: ${genBatch[batchId].length}`
     );
   }

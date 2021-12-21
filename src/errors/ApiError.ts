@@ -1,5 +1,3 @@
-/** @format */
-
 class ApiError extends Error {
   statusCode: number;
   isOperational: boolean;

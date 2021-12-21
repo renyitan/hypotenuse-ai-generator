@@ -1,10 +1,10 @@
-// import express from 'express';
 import chai from 'chai';
 import request from 'supertest';
 import httpStatus from 'http-status';
-// import express from '../config/express';
 
-const server = request('http://localhost:8080/v1');
+import testConfig from './testConfig';
+
+const server = request(testConfig.baseURL);
 
 describe('Testing health check route', () => {
   describe(`GET "/status"`, () => {

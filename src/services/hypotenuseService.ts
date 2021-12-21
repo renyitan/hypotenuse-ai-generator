@@ -3,12 +3,17 @@ import httpStatus from 'http-status';
 import config from '../config/config';
 
 import ApiError from '../errors/ApiError';
-import shopifyService from './shopifyService';
+import logger from '../config/logger';
 import { GeneratorRequest, GeneratorResponse } from '../models';
 
 axios.defaults.baseURL = 'https://app.hypotenuse.ai/api/v1';
 axios.defaults.headers.common['X-API-KEY'] = config.hypotenuse.apiKey;
 
+/**
+ *
+ * @param generatorRequest Request body to Generators API
+ * @returns Response from Generators API
+ */
 const generateContent = async (
   generatorRequest: GeneratorRequest
 ): Promise<GeneratorResponse> => {
@@ -17,8 +22,8 @@ const generateContent = async (
       'generations/create',
       generatorRequest
     );
-    console.log(
-      `[HypotenuseService] Sent ${generatorRequest.product_data.ProductTitle} to generator!`
+    logger.info(
+      `[HypotenuseService] Sent "${generatorRequest.product_data.ProductTitle}" to generator!`
     );
     return response.data;
   } catch (error: any) {

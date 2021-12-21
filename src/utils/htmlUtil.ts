@@ -2,8 +2,12 @@ import path from 'path';
 import * as ejs from 'ejs';
 import { promises as fs } from 'fs';
 import ApiError from '../errors/ApiError';
+import { GenerationBatch } from '../models';
 
-export const generateHTML = async (storeName, data): Promise<string> => {
+export const generateHTML = async (
+  storeName: string,
+  data: GenerationBatch
+): Promise<string> => {
   try {
     // 1. get the HTML template
     const template = await fs.readFile(

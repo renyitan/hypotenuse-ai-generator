@@ -45,7 +45,6 @@ app.use(error.handler);
 
 // set up cron service
 cron.schedule('*/10 * * * * *', async () => {
-  // console.log('[Cron] Running a task every 10 s');
   cronController.checkCompletedTransactions();
   cronController.checkForTransactionErrors();
 });

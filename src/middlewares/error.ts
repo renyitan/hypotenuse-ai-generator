@@ -1,5 +1,3 @@
-/** @format */
-
 import ApiError from '../errors/ApiError';
 import httpStatus from 'http-status';
 import config from '../config/config';
@@ -23,10 +21,10 @@ const handler = (err, req, res, next) => {
     code: statusCode,
     message: err.message,
     // stack: err.stack,
-    ...(config.env === 'development' && { stack: err.stack }),
+    ...(config.env === 'dev' && { stack: err.stack }),
   };
 
-  if (config.env === 'development') {
+  if (config.env === 'dev') {
     logger.error(err);
   }
 

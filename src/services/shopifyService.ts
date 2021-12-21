@@ -1,5 +1,6 @@
-import httpStatus from 'http-status';
 import Shopify, { IProduct, IBlog, IArticle } from 'shopify-api-node';
+
+import logger from '../config/logger';
 import ApiError from '../errors/ApiError';
 import config from '../config/config';
 
@@ -12,6 +13,11 @@ const shopify = new Shopify({
   password: config.shopify.apiSecret,
 });
 
+/**
+ *
+ * @param productId Product Id of Shopify product
+ * @returns details of shopify product
+ */
 const getProductDetail = async (productId: number): Promise<IProduct> => {
   try {
     const productDetail = await shopify.product.get(productId);
@@ -31,9 +37,9 @@ const getBlogIds = async (): Promise<IBlog[]> => {
 };
 
 const postArticle = async (
-  blogId,
-  articleTitle,
-  articleHTMLbody
+  blogId: number,
+  articleTitle: string,
+  articleHTMLbody: string
 ): Promise<IArticle> => {
   try {
     let response: IArticle = await shopify.article.create(blogId, {
@@ -41,7 +47,7 @@ const postArticle = async (
       author: 'Renyi Tan',
       title: articleTitle,
     });
-    console.log('[ShopifyService] Successfully uploaded to Shopify blog');
+    logger.info('[ShopifyService] Successfully uploaded to Shopify blog');
     return response;
   } catch (error: any) {
     throw new ApiError(404, error?.message);
