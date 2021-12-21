@@ -14,9 +14,9 @@ const shopify = new Shopify({
 });
 
 /**
- *
- * @param productId Product Id of Shopify product
- * @returns details of shopify product
+ * Gets info for one Shopify product based on Id
+ * @param {number} productId - Shopify Product Id
+ * @returns {IProduct} - Shopify Product info
  */
 const getProductDetail = async (productId: number): Promise<IProduct> => {
   try {
@@ -27,6 +27,11 @@ const getProductDetail = async (productId: number): Promise<IProduct> => {
   }
 };
 
+/**
+ * Gets list of Shopify blogs for current user
+ * @param {void}
+ * @returns {IBlog[]} - List of shopify blog info
+ */
 const getBlogIds = async (): Promise<IBlog[]> => {
   try {
     const shopifyBlogs = await shopify.blog.list();
@@ -36,6 +41,13 @@ const getBlogIds = async (): Promise<IBlog[]> => {
   }
 };
 
+/**
+ * Posts an HTML string as Article body to a specific Shopify blog
+ * @param {number} blogId - Determines which blog to send the Article to
+ * @param {string} articleHTMLbody - HTML body string to be sent to Shopify Article API
+ * @param {string} articleTitle - Title of Article
+ * @returns {IArticle} - Article object from Shopify API
+ */
 const postArticle = async (
   blogId: number,
   articleTitle: string,

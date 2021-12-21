@@ -10,9 +10,9 @@ axios.defaults.baseURL = 'https://app.hypotenuse.ai/api/v1';
 axios.defaults.headers.common['X-API-KEY'] = config.hypotenuse.apiKey;
 
 /**
- *
- * @param generatorRequest Request body to Generators API
- * @returns Response from Generators API
+ * Sends a request to Generator API
+ * @param {GeneratorRequest} generatorRequest - Request body to Generators API
+ * @returns {GeneratorResponse} - Response from Generators API
  */
 const generateContent = async (
   generatorRequest: GeneratorRequest
